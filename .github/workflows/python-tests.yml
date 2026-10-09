@@ -1,0 +1,27 @@
+
+name: Python Verification
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run distance model
+        run: python python/parameterized_distance_model.py
+
+      - name: Run anomaly classification tests
+        run: python python/test_distance_cases.py
