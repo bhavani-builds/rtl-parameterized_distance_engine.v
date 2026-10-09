@@ -1,0 +1,31 @@
+
+name: Verilog Simulation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  simulate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Icarus Verilog
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+
+      - name: Compile distance engine testbench
+        run: |
+          iverilog -g2012 -Wall -s parameterized_distance_engine_tb \
+            -o distance_test \
+            rtl/parameterized_distance_engine.v \
+            tb/parameterized_distance_engine_tb.v
+
+      - name: Run simulation
+        run: vvp distance_test
