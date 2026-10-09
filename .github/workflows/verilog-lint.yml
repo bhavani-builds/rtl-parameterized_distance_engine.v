@@ -20,8 +20,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y verilator
 
+      - name: Find Verilog source
+        id: source
+        shell: bash
+        run: |
+          FILE=$(find . -type f \
+            -name "parameterized_distance_engine.v" \
+            -not -path "./.git/*" | head -n 1)
+
+          if [ -z "$FILE" ]; then
+            echo "ERROR: Verilog source file not found!"
+            find . -maxdepth 4 -type f
+            exit 1
+          fi
+
+          echo "Found source: $FILE"
+          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+
       - name: Lint parameterized distance engine
         run: |
-          verilator --lint-only -Wall \
-            --Wno-fatal \
-            rtl/parameterized_distance_engine.v
+          verilator --lint-only -Wall --Wno-fatal \
+            "${{ steps.source.outputs.file }}"
