@@ -1,0 +1,5 @@
+
+test_name,feature_0,feature_1,feature_2,feature_3,ref_0,ref_1,ref_2,ref_3,expected_distance,expected_class
+normal_sample,102,201,299,405,100,200,300,400,31,NORMAL
+anomaly_sample,500,20,800,100,100,200,300,400,532400,ANOMALY
+identical_sample,100,200,300,400,100,200,300,400,0,NORMAL
