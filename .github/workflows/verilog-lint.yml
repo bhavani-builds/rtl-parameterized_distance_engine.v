@@ -1,43 +1,46 @@
 
-name: Verilog RTL Lint
+module parameterized_distance_engine #(
+    parameter DATA_WIDTH = 16,
+    parameter NUM_FEATURES = 4,
+    parameter DIST_WIDTH = 64
+)(
+    input wire clk,
+    input wire reset,
+    input wire enable,
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+    input wire [DATA_WIDTH*NUM_FEATURES-1:0] features,
+    input wire [DATA_WIDTH*NUM_FEATURES-1:0] references,
 
-jobs:
-  lint:
-    runs-on: ubuntu-latest
+    output reg [DIST_WIDTH-1:0] distance,
+    output reg valid
+);
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    integer i;
+    reg signed [DATA_WIDTH:0] difference;
+    reg signed [(2*DATA_WIDTH)+1:0] square;
+    reg [DIST_WIDTH-1:0] sum;
 
-      - name: Install Verilator
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y verilator
+    always @(posedge clk) begin
+        if (reset) begin
+            distance <= 0;
+            valid <= 0;
+        end else if (enable) begin
+            sum = 0;
 
-      - name: Find Verilog source
-        id: source
-        shell: bash
-        run: |
-          FILE=$(find . -type f \
-            -name "parameterized_distance_engine.v" \
-            -not -path "./.git/*" | head -n 1)
+            for (i = 0; i < NUM_FEATURES; i = i + 1) begin
+                difference =
+                    $signed(features[i*DATA_WIDTH +: DATA_WIDTH]) -
+                    $signed(references[i*DATA_WIDTH +: DATA_WIDTH]);
 
-          if [ -z "$FILE" ]; then
-            echo "ERROR: Verilog source file not found!"
-            find . -maxdepth 4 -type f
-            exit 1
-          fi
+                square = difference * difference;
+                sum = sum + square;
+            end
 
-          echo "Found source: $FILE"
-          echo "file=$FILE" >> "$GITHUB_OUTPUT"
+            distance <= sum;
+            valid <= 1;
+        end else begin
+            valid <= 0;
+        end
+    end
 
-      - name: Lint parameterized distance engine
-        run: |
-          verilator --lint-only -Wall --Wno-fatal \
-            "${{ steps.source.outputs.file }}"
+endmodule
